@@ -3,63 +3,81 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $customers = Customer::with('branch')->latest()->get();
+
+        return view('customers.index', compact('customers'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        $branches = Branch::orderBy('name')->get();
+
+        return view('customers.create', compact('branches'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'branch_id'   => 'required|exists:branches,id',
+            'name'        => 'required|max:255',
+            'father_name' => 'required|max:255',
+            'cnic'        => 'required|unique:customers,cnic',
+            'mobile'      => 'required|max:20',
+            'address'     => 'required',
+            'status'      => 'required',
+        ]);
+
+        Customer::create($request->all());
+
+        return redirect()
+            ->route('customers.index')
+            ->with('success', 'Customer Added Successfully');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Customer $customer)
     {
-        //
+        return redirect()->route('customers.index');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Customer $customer)
     {
-        //
+        $branches = Branch::orderBy('name')->get();
+
+        return view('customers.edit', compact('customer', 'branches'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Customer $customer)
     {
-        //
+        $request->validate([
+            'branch_id'   => 'required|exists:branches,id',
+            'name'        => 'required|max:255',
+            'father_name' => 'required|max:255',
+            'cnic'        => 'required|unique:customers,cnic,' . $customer->id,
+            'mobile'      => 'required|max:20',
+            'address'     => 'required',
+            'status'      => 'required',
+        ]);
+
+        $customer->update($request->all());
+
+        return redirect()
+            ->route('customers.index')
+            ->with('success', 'Customer Updated Successfully');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Customer $customer)
     {
-        //
+        $customer->delete();
+
+        return redirect()
+            ->route('customers.index')
+            ->with('success', 'Customer Deleted Successfully');
     }
 }

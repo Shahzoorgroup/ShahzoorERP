@@ -6,20 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
+
             $table->id();
+
+            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+
+            $table->string('name');
+            $table->string('father_name');
+            $table->string('cnic')->unique();
+            $table->string('mobile');
+            $table->text('address');
+
+            $table->enum('status', [
+                'Active',
+                'Closed',
+                'Defaulter'
+            ])->default('Active');
+
             $table->timestamps();
+
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('customers');
