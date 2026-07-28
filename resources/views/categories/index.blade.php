@@ -40,7 +40,7 @@
 
                     <tbody>
 
-                        @forelse($categories as $category)
+                    @forelse($categories as $category)
 
                         <tr class="border-t">
 
@@ -49,12 +49,33 @@
                             <td class="p-3">{{ $category->status }}</td>
 
                             <td class="p-3">
-                                Edit | Delete
+
+                                <a href="{{ route('categories.edit', $category) }}"
+                                   class="bg-yellow-500 text-white px-3 py-1 rounded">
+                                    Edit
+                                </a>
+
+                                <form action="{{ route('categories.destroy', $category) }}"
+                                      method="POST"
+                                      class="inline">
+
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button
+                                        type="submit"
+                                        onclick="return confirm('Are you sure you want to delete this category?')"
+                                        class="bg-red-600 text-white px-3 py-1 rounded">
+                                        Delete
+                                    </button>
+
+                                </form>
+
                             </td>
 
                         </tr>
 
-                        @empty
+                    @empty
 
                         <tr>
                             <td colspan="4" class="text-center p-5">
@@ -62,7 +83,7 @@
                             </td>
                         </tr>
 
-                        @endforelse
+                    @endforelse
 
                     </tbody>
 

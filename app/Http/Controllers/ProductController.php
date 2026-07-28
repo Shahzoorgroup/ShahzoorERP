@@ -2,62 +2,73 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $products = Product::with(['branch', 'category'])->latest()->get();
+
+        return view('products.index', compact('products'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        $branches = Branch::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
+
+        return view('products.create', compact('branches', 'categories'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'branch_id' => 'required|exists:branches,id',
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|max:255',
+            'company' => 'required|max:255',
+            'model' => 'nullable|max:255',
+            'barcode' => 'nullable|max:255|unique:products,barcode',
+            'cost_price' => 'required|numeric',
+            'sale_price' => 'required|numeric',
+            'minimum_sale_price' => 'required|numeric',
+            'down_payment' => 'required|numeric',
+            'installment_months' => 'required|integer',
+            'monthly_installment' => 'required|numeric',
+            'stock_quantity' => 'required|integer',
+            'minimum_stock' => 'required|integer',
+            'status' => 'required',
+        ]);
+
+        Product::create($request->all());
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product Added Successfully');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Product $product)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Product $product)
     {
-        //
+        $branches = Branch::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
+
+        return view('products.edit', compact('product', 'branches', 'categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Product $product)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Product $product)
     {
         //
