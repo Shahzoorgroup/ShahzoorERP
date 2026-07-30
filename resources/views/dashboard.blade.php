@@ -48,22 +48,26 @@
                     Quick Menu
                 </h3>
 
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
 
                     <a href="{{ route('customers.index') }}" class="bg-blue-600 text-white p-3 rounded-lg text-center">
                         Customers
                     </a>
 
-                    <a href="#" class="bg-green-600 text-white p-3 rounded-lg text-center">
+                    <a href="{{ route('products.index') }}" class="bg-green-600 text-white p-3 rounded-lg text-center">
                         Products
                     </a>
 
-                    <a href="#" class="bg-yellow-500 text-white p-3 rounded-lg text-center">
+                    <a href="{{ route('sales.index') }}" class="bg-yellow-500 text-white p-3 rounded-lg text-center">
                         Sales
                     </a>
 
                     <a href="#" class="bg-red-600 text-white p-3 rounded-lg text-center">
                         Recovery
+                    </a>
+
+                    <a href="{{ route('categories.index') }}" class="bg-indigo-600 text-white p-3 rounded-lg text-center">
+                        Categories
                     </a>
 
                     <a href="{{ route('branches.index') }}" class="bg-purple-600 text-white p-3 rounded-lg text-center">
