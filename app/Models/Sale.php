@@ -21,6 +21,15 @@ class Sale extends Model
         'remarks',
     ];
 
+    protected $casts = [
+        'sale_date' => 'date',
+        'next_due_date' => 'date',
+        'total_amount' => 'decimal:2',
+        'down_payment' => 'decimal:2',
+        'remaining_amount' => 'decimal:2',
+        'monthly_installment' => 'decimal:2',
+    ];
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);

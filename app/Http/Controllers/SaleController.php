@@ -6,7 +6,9 @@ use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
@@ -41,7 +43,80 @@ class SaleController extends Controller
 
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'invoice_no' => 'required|unique:sales,invoice_no',
+            'branch_id' => 'required|exists:branches,id',
+            'customer_id' => 'required|exists:customers,id',
+            'sale_date' => 'required|date',
+            'product_id' => 'required|array|min:1',
+            'product_id.*' => 'required|exists:products,id',
+            'quantity' => 'required|array',
+            'quantity.*' => 'required|integer|min:1',
+            'price' => 'required|array',
+            'price.*' => 'required|numeric|min:0',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $grandTotal = 0;
+
+            foreach ($request->product_id as $index => $productId) {
+
+                $grandTotal +=
+                    $request->quantity[$index] *
+                    $request->price[$index];
+            }
+
+            $sale = Sale::create([
+                'invoice_no' => $request->invoice_no,
+                'branch_id' => $request->branch_id,
+                'customer_id' => $request->customer_id,
+                'sale_date' => $request->sale_date,
+                'total_amount' => $grandTotal,
+                'down_payment' => 0,
+                'remaining_amount' => $grandTotal,
+                'installment_months' => 0,
+                'monthly_installment' => 0,
+                'next_due_date' => null,
+                'status' => 'Running',
+                'remarks' => null,
+            ]);
+
+            foreach ($request->product_id as $index => $productId) {
+
+                $qty = $request->quantity[$index];
+                $price = $request->price[$index];
+                $total = $qty * $price;
+
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $productId,
+                    'quantity' => $qty,
+                    'unit_price' => $price,
+                    'total_price' => $total,
+                ]);
+
+                $product = Product::find($productId);
+
+                $product->decrement('stock_quantity', $qty);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('sales.index')
+                ->with('success', 'Sale Added Successfully');
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function show(Sale $sale)

@@ -41,6 +41,30 @@ class CustomerController extends Controller
             ->with('success', 'Customer Added Successfully');
     }
 
+    public function ajaxStore(Request $request)
+    {
+        $request->validate([
+            'branch_id'   => 'required|exists:branches,id',
+            'name'        => 'required|max:255',
+            'father_name' => 'required|max:255',
+            'cnic'        => 'required|unique:customers,cnic',
+            'mobile'      => 'required|max:20',
+            'address'     => 'required',
+            'status'      => 'required',
+        ]);
+
+        $customer = Customer::create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer Added Successfully',
+            'customer' => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+            ],
+        ]);
+    }
+
     public function show(Customer $customer)
     {
         return redirect()->route('customers.index');

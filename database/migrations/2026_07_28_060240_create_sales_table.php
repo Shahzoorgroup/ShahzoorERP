@@ -24,11 +24,11 @@ return new class extends Migration
 
             $table->decimal('down_payment', 12, 2)->default(0);
 
-            $table->decimal('remaining_amount', 12, 2);
+            $table->decimal('remaining_amount', 12, 2)->default(0);
 
-            $table->integer('installment_months');
+            $table->integer('installment_months')->default(0);
 
-            $table->decimal('monthly_installment', 12, 2);
+            $table->decimal('monthly_installment', 12, 2)->default(0);
 
             $table->date('next_due_date')->nullable();
 
