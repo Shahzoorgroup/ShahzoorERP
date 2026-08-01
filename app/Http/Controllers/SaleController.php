@@ -121,21 +121,176 @@ class SaleController extends Controller
 
     public function show(Sale $sale)
     {
-        //
+        $sale->load([
+            'branch',
+            'customer',
+            'saleItems.product',
+        ]);
+
+        return view('sales.show', compact('sale'));
     }
 
     public function edit(Sale $sale)
     {
-        //
-    }
+        $sale->load('saleItems.product');
 
-    public function update(Request $request, Sale $sale)
-    {
-        //
-    }
+        $branches = Branch::orderBy('name')->get();
 
-    public function destroy(Sale $sale)
+        $customers = Customer::orderBy('name')->get();
+
+        $products = Product::where('status', 'Active')
+            ->orderBy('name')
+            ->get();
+
+        return view(
+            'sales.edit',
+            compact(
+                'sale',
+                'branches',
+                'customers',
+                'products'
+            )
+        );
+    }
+	    public function update(Request $request, Sale $sale)
     {
-        //
+        $request->validate([
+            'branch_id' => 'required|exists:branches,id',
+            'customer_id' => 'required|exists:customers,id',
+            'sale_date' => 'required|date',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            foreach ($sale->saleItems as $item) {
+
+                $product = Product::find($item->product_id);
+
+                if ($product) {
+
+                    $product->increment(
+                        'stock_quantity',
+                        $item->quantity
+                    );
+
+                }
+
+            }
+
+            $sale->saleItems()->delete();
+
+            $grandTotal = 0;
+
+            foreach ($request->product_id as $index => $productId) {
+
+                $qty = $request->quantity[$index];
+
+                $price = $request->price[$index];
+
+                $total = $qty * $price;
+
+                $grandTotal += $total;
+
+                SaleItem::create([
+
+                    'sale_id' => $sale->id,
+                    'product_id' => $productId,
+                    'quantity' => $qty,
+                    'unit_price' => $price,
+                    'total_price' => $total,
+
+                ]);
+
+                $product = Product::find($productId);
+
+                if ($product) {
+
+                    $product->decrement(
+                        'stock_quantity',
+                        $qty
+                    );
+
+                }
+
+            }
+
+            $sale->update([
+
+                'branch_id' => $request->branch_id,
+                'customer_id' => $request->customer_id,
+                'sale_date' => $request->sale_date,
+                'total_amount' => $grandTotal,
+                'remaining_amount' => $grandTotal,
+
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('sales.index')
+                ->with(
+                    'success',
+                    'Sale Updated Successfully'
+                );
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    $e->getMessage()
+                );
+
+        }
+    }
+	    public function destroy(Sale $sale)
+    {
+        DB::beginTransaction();
+
+        try {
+
+            foreach ($sale->saleItems as $item) {
+
+                $product = Product::find($item->product_id);
+
+                if ($product) {
+
+                    $product->increment(
+                        'stock_quantity',
+                        $item->quantity
+                    );
+
+                }
+
+            }
+
+            $sale->saleItems()->delete();
+
+            $sale->delete();
+
+            DB::commit();
+
+            return redirect()
+                ->route('sales.index')
+                ->with(
+                    'success',
+                    'Sale Deleted Successfully'
+                );
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return back()->with(
+                'error',
+                $e->getMessage()
+            );
+
+        }
     }
 }

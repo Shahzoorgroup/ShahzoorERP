@@ -564,6 +564,68 @@ document.getElementById("closeCustomerModal2").addEventListener("click",function
 });
 
 calculateTotals();
+document.getElementById("saveCustomer").addEventListener("click", function () {
+
+    let form = document.getElementById("customerForm");
+
+    let formData = new FormData(form);
+
+    fetch("{{ route('customers.ajaxStore') }}", {
+
+        method: "POST",
+
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('input[name="_token"]').value,
+            "Accept": "application/json"
+        },
+
+        body: formData
+
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        if (data.success) {
+
+            let customerSelect = document.getElementById("customer_id");
+
+            let option = document.createElement("option");
+
+            option.value = data.customer.id;
+
+            option.text = data.customer.name;
+
+            option.selected = true;
+
+            customerSelect.appendChild(option);
+
+            form.reset();
+
+            modal.classList.remove("flex");
+
+            modal.classList.add("hidden");
+
+            alert(data.message);
+
+        } else {
+
+            alert("Customer save failed.");
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.log(error);
+
+        alert("Something went wrong.");
+
+    });
+
+});
 
 </script>
 
