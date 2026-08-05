@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,37 +12,91 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
+        'branch_id',
         'name',
         'email',
         'password',
+        'role',
+        'designation',
+        'mobile',
+        'profile_photo',
+        'status',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Role Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function isCEO()
+    {
+        return $this->role === 'CEO';
+    }
+
+    public function isBranchManager()
+    {
+        return $this->role === 'Branch Manager';
+    }
+
+    public function isSalesManager()
+    {
+        return $this->role === 'Sales Manager';
+    }
+
+    public function isSalesman()
+    {
+        return $this->role === 'Salesman';
+    }
+
+    public function isRecoveryManager()
+    {
+        return $this->role === 'Recovery Manager';
+    }
+
+    public function isRecoveryOfficer()
+    {
+        return $this->role === 'Recovery Officer';
+    }
+
+    public function isAccountant()
+    {
+        return $this->role === 'Accountant';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Helper
+    |--------------------------------------------------------------------------
+    */
+
+    public function isActive()
+    {
+        return $this->status === 'Active';
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecoveryController;
 use App\Http\Controllers\SaleController;
 use App\Models\Branch;
 use App\Models\Customer;
@@ -32,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::resource('products', ProductController::class);
     Route::resource('sales', SaleController::class);
+    Route::resource('recoveries', RecoveryController::class);
 
     Route::post('/customers/ajax-store', [CustomerController::class, 'ajaxStore'])
         ->name('customers.ajaxStore');
