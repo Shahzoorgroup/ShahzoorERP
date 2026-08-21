@@ -9,15 +9,14 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     protected $fillable = [
         'branch_id',
+        'role_id',
         'name',
         'email',
         'password',
-        'role',
         'designation',
         'mobile',
         'profile_photo',
@@ -48,54 +47,53 @@ class User extends Authenticatable
         return $this->belongsTo(Branch::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Role Helpers
-    |--------------------------------------------------------------------------
-    */
-
-    public function isCEO()
+    public function role()
     {
-        return $this->role === 'CEO';
-    }
-
-    public function isBranchManager()
-    {
-        return $this->role === 'Branch Manager';
-    }
-
-    public function isSalesManager()
-    {
-        return $this->role === 'Sales Manager';
-    }
-
-    public function isSalesman()
-    {
-        return $this->role === 'Salesman';
-    }
-
-    public function isRecoveryManager()
-    {
-        return $this->role === 'Recovery Manager';
-    }
-
-    public function isRecoveryOfficer()
-    {
-        return $this->role === 'Recovery Officer';
-    }
-
-    public function isAccountant()
-    {
-        return $this->role === 'Accountant';
+        return $this->belongsTo(Role::class);
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Status Helper
+    | Helpers
     |--------------------------------------------------------------------------
     */
 
-    public function isActive()
+    public function hasRole(string $roleName): bool
+    {
+        return $this->role && $this->role->name === $roleName;
+    }
+
+    public function isCEO(): bool
+    {
+        return $this->hasRole('ceo');
+    }
+
+    public function isSalesManager(): bool
+    {
+        return $this->hasRole('sales_manager');
+    }
+
+    public function isSalesOfficer(): bool
+    {
+        return $this->hasRole('sales_officer');
+    }
+
+    public function isSalesman(): bool
+    {
+        return $this->hasRole('salesman');
+    }
+
+    public function isRecoveryOfficer(): bool
+    {
+        return $this->hasRole('recovery_officer');
+    }
+
+    public function isAccountant(): bool
+    {
+        return $this->hasRole('accountant');
+    }
+
+    public function isActive(): bool
     {
         return $this->status === 'Active';
     }
