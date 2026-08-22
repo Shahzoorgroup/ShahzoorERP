@@ -30,60 +30,57 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Masters
-    |--------------------------------------------------------------------------
-    */
-
     Route::resource('branches', BranchController::class);
-    Route::resource('categories', CategoryController::class);
-    Route::resource('products', ProductController::class);
-    Route::resource('roles', RoleController::class);
-    Route::resource('users', UserManagementController::class);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Customers
-    |--------------------------------------------------------------------------
-    */
+    Route::resource('categories', CategoryController::class);
+
+    Route::resource('products', ProductController::class);
+
+    Route::resource('roles', RoleController::class);
+
+    Route::resource('users', UserManagementController::class);
 
     Route::resource('customers', CustomerController::class);
 
-    Route::post('/customers/ajax-store', [CustomerController::class, 'ajaxStore'])
-        ->name('customers.ajaxStore');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Sales
-    |--------------------------------------------------------------------------
-    */
+    Route::post(
+        '/customers/ajax-store',
+        [CustomerController::class, 'ajaxStore']
+    )->name('customers.ajaxStore');
 
     Route::resource('sales', SaleController::class);
 
     /*
     |--------------------------------------------------------------------------
-    | Recoveries
+    | Sales Approval
     |--------------------------------------------------------------------------
     */
+
+    Route::post(
+        '/sales/{sale}/approve',
+        [SaleController::class, 'approve']
+    )->name('sales.approve');
+
+    Route::post(
+        '/sales/{sale}/reject',
+        [SaleController::class, 'reject']
+    )->name('sales.reject');
 
     Route::resource('recoveries', RecoveryController::class);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Profile
-    |--------------------------------------------------------------------------
-    */
+    Route::get(
+        '/profile',
+        [ProfileController::class, 'edit']
+    )->name('profile.edit');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])
-        ->name('profile.edit');
+    Route::patch(
+        '/profile',
+        [ProfileController::class, 'update']
+    )->name('profile.update');
 
-    Route::patch('/profile', [ProfileController::class, 'update'])
-        ->name('profile.update');
-
-    Route::delete('/profile', [ProfileController::class, 'destroy'])
-        ->name('profile.destroy');
-
+    Route::delete(
+        '/profile',
+        [ProfileController::class, 'destroy']
+    )->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';

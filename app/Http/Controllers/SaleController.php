@@ -21,6 +21,7 @@ class SaleController extends Controller
             'salesman',
             'salesOfficer',
             'recoveryOfficer',
+            'approvedBy',
         ])
             ->latest()
             ->get();
@@ -109,6 +110,9 @@ class SaleController extends Controller
             $marketAdvance = (float) ($request->market_advance ?? 0);
 
             if ($marketAdvance > $grandTotal) {
+
+                DB::rollBack();
+
                 return back()
                     ->withInput()
                     ->withErrors([
@@ -119,24 +123,33 @@ class SaleController extends Controller
 
             $remainingAmount = $grandTotal - $marketAdvance;
 
-            $installmentMonths = (int) ($request->installment_months ?? 0);
+            $installmentMonths =
+                (int) ($request->installment_months ?? 0);
 
             $monthlyInstallment = 0;
 
             if ($installmentMonths > 0 && $remainingAmount > 0) {
+
                 $monthlyInstallment =
                     $remainingAmount / $installmentMonths;
             }
 
             $salesmanId = null;
 
-            if (auth()->check() && auth()->user()->isSalesman()) {
+            if (
+                auth()->check() &&
+                method_exists(auth()->user(), 'isSalesman') &&
+                auth()->user()->isSalesman()
+            ) {
                 $salesmanId = auth()->id();
             }
 
             $sale = Sale::create([
+
                 'invoice_no' => $request->invoice_no,
+
                 'branch_id' => $request->branch_id,
+
                 'customer_id' => $request->customer_id,
 
                 'salesman_id' => $salesmanId,
@@ -157,9 +170,11 @@ class SaleController extends Controller
 
                 'remaining_amount' => $remainingAmount,
 
-                'installment_months' => $installmentMonths,
+                'installment_months' =>
+                    $installmentMonths,
 
-                'monthly_installment' => $monthlyInstallment,
+                'monthly_installment' =>
+                    $monthlyInstallment,
 
                 'next_due_date' =>
                     $request->next_due_date,
@@ -178,20 +193,28 @@ class SaleController extends Controller
             foreach ($request->product_id as $index => $productId) {
 
                 $qty = (int) $request->quantity[$index];
+
                 $price = (float) $request->price[$index];
+
                 $total = $qty * $price;
 
                 SaleItem::create([
+
                     'sale_id' => $sale->id,
+
                     'product_id' => $productId,
+
                     'quantity' => $qty,
+
                     'unit_price' => $price,
+
                     'total_price' => $total,
                 ]);
 
                 $product = Product::find($productId);
 
                 if ($product) {
+
                     $product->decrement(
                         'stock_quantity',
                         $qty
@@ -205,7 +228,7 @@ class SaleController extends Controller
                 ->route('sales.index')
                 ->with(
                     'success',
-                    'Sale Added Successfully. Waiting for approval.'
+                    'Sale Added Successfully. Waiting for Sales Manager approval.'
                 );
 
         } catch (\Exception $e) {
@@ -278,27 +301,45 @@ class SaleController extends Controller
     public function update(Request $request, Sale $sale)
     {
         $request->validate([
+
             'branch_id' => 'required|exists:branches,id',
+
             'customer_id' => 'required|exists:customers,id',
+
             'sale_date' => 'required|date',
 
             'product_id' => 'required|array|min:1',
-            'product_id.*' => 'required|exists:products,id',
+
+            'product_id.*' =>
+                'required|exists:products,id',
 
             'quantity' => 'required|array',
-            'quantity.*' => 'required|integer|min:1',
+
+            'quantity.*' =>
+                'required|integer|min:1',
 
             'price' => 'required|array',
-            'price.*' => 'required|numeric|min:0',
 
-            'market_advance' => 'nullable|numeric|min:0',
+            'price.*' =>
+                'required|numeric|min:0',
 
-            'sales_officer_id' => 'nullable|exists:users,id',
-            'recovery_officer_id' => 'nullable|exists:users,id',
+            'market_advance' =>
+                'nullable|numeric|min:0',
 
-            'installment_months' => 'nullable|integer|min:0',
-            'next_due_date' => 'nullable|date',
-            'remarks' => 'nullable|string|max:1000',
+            'sales_officer_id' =>
+                'nullable|exists:users,id',
+
+            'recovery_officer_id' =>
+                'nullable|exists:users,id',
+
+            'installment_months' =>
+                'nullable|integer|min:0',
+
+            'next_due_date' =>
+                'nullable|date',
+
+            'remarks' =>
+                'nullable|string|max:1000',
         ]);
 
         DB::beginTransaction();
@@ -310,6 +351,7 @@ class SaleController extends Controller
                 $product = Product::find($item->product_id);
 
                 if ($product) {
+
                     $product->increment(
                         'stock_quantity',
                         $item->quantity
@@ -323,24 +365,40 @@ class SaleController extends Controller
 
             foreach ($request->product_id as $index => $productId) {
 
-                $qty = (int) $request->quantity[$index];
-                $price = (float) $request->price[$index];
+                $qty =
+                    (int) $request->quantity[$index];
 
-                $total = $qty * $price;
+                $price =
+                    (float) $request->price[$index];
+
+                $total =
+                    $qty * $price;
 
                 $grandTotal += $total;
 
                 SaleItem::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $productId,
-                    'quantity' => $qty,
-                    'unit_price' => $price,
-                    'total_price' => $total,
+
+                    'sale_id' =>
+                        $sale->id,
+
+                    'product_id' =>
+                        $productId,
+
+                    'quantity' =>
+                        $qty,
+
+                    'unit_price' =>
+                        $price,
+
+                    'total_price' =>
+                        $total,
                 ]);
 
-                $product = Product::find($productId);
+                $product =
+                    Product::find($productId);
 
                 if ($product) {
+
                     $product->decrement(
                         'stock_quantity',
                         $qty
@@ -375,25 +433,34 @@ class SaleController extends Controller
                 $installmentMonths > 0 &&
                 $remainingAmount > 0
             ) {
+
                 $monthlyInstallment =
-                    $remainingAmount / $installmentMonths;
+                    $remainingAmount /
+                    $installmentMonths;
             }
 
             $sale->update([
 
-                'branch_id' => $request->branch_id,
+                'branch_id' =>
+                    $request->branch_id,
 
-                'customer_id' => $request->customer_id,
+                'customer_id' =>
+                    $request->customer_id,
 
-                'sale_date' => $request->sale_date,
+                'sale_date' =>
+                    $request->sale_date,
 
-                'total_amount' => $grandTotal,
+                'total_amount' =>
+                    $grandTotal,
 
-                'market_advance' => $marketAdvance,
+                'market_advance' =>
+                    $marketAdvance,
 
-                'down_payment' => $marketAdvance,
+                'down_payment' =>
+                    $marketAdvance,
 
-                'remaining_amount' => $remainingAmount,
+                'remaining_amount' =>
+                    $remainingAmount,
 
                 'installment_months' =>
                     $installmentMonths,
@@ -413,6 +480,14 @@ class SaleController extends Controller
                 'remarks' =>
                     $request->remarks,
 
+                'approval_status' =>
+                    'Pending',
+
+                'approved_by' =>
+                    null,
+
+                'approved_at' =>
+                    null,
             ]);
 
             DB::commit();
@@ -421,7 +496,7 @@ class SaleController extends Controller
                 ->route('sales.index')
                 ->with(
                     'success',
-                    'Sale Updated Successfully'
+                    'Sale Updated Successfully. Waiting for approval.'
                 );
 
         } catch (\Exception $e) {
@@ -437,6 +512,87 @@ class SaleController extends Controller
         }
     }
 
+    public function approve(Sale $sale)
+    {
+        if (!$this->isSalesManager()) {
+
+            abort(403, 'Only Sales Manager can approve sales.');
+        }
+
+        if ($sale->approval_status !== 'Pending') {
+
+            return back()->with(
+                'error',
+                'This sale has already been processed.'
+            );
+        }
+
+        $sale->update([
+
+            'approval_status' =>
+                'Approved',
+
+            'approved_by' =>
+                auth()->id(),
+
+            'approved_at' =>
+                now(),
+        ]);
+
+        return back()->with(
+            'success',
+            'Sale approved successfully.'
+        );
+    }
+
+    public function reject(Sale $sale)
+    {
+        if (!$this->isSalesManager()) {
+
+            abort(403, 'Only Sales Manager can reject sales.');
+        }
+
+        if ($sale->approval_status !== 'Pending') {
+
+            return back()->with(
+                'error',
+                'This sale has already been processed.'
+            );
+        }
+
+        $sale->update([
+
+            'approval_status' =>
+                'Rejected',
+
+            'approved_by' =>
+                auth()->id(),
+
+            'approved_at' =>
+                now(),
+        ]);
+
+        return back()->with(
+            'success',
+            'Sale rejected successfully.'
+        );
+    }
+
+    private function isSalesManager()
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        if (!$user->role) {
+            return false;
+        }
+
+        return $user->role->name === 'sales_manager';
+    }
+
     public function destroy(Sale $sale)
     {
         DB::beginTransaction();
@@ -445,7 +601,8 @@ class SaleController extends Controller
 
             foreach ($sale->saleItems as $item) {
 
-                $product = Product::find($item->product_id);
+                $product =
+                    Product::find($item->product_id);
 
                 if ($product) {
 
